@@ -1,0 +1,35 @@
+---
+
+# Call Ansible Module
+- name: Execute Ansible Module with system Python to download
+  community.sap_launchpad.software_center_download:
+    suser_id: "{{ env_var_ansible_sap_suser }}"
+    suser_password: "{{ env_var_ansible_sap_suser_password }}"
+    softwarecenter_search_query: "{{ download_item }}"
+    dest: "/downloads_tmp"
+  register: download_task
+  retries: 1
+  until: download_task is not failed
+  ignore_errors: true
+#  vars:
+#    ansible_python_interpreter: python3.6
+
+- name: Output of download_task
+  ansible.builtin.debug:
+    msg: "{{download_task.msg}}"
+
+- name: Execute IBM Cloud CLI to upload file to IBM Cloud Object Storage
+  ansible.builtin.shell: |
+    cd /downloads_tmp
+    export IBMCLOUD_API_KEY="{{env_var_ibmcloud_service_id_apikey_cos_operator}}"
+    ibmcloud cos object-put --region "{{ibmcloud_object_storage_bucket_region.stdout}}" --bucket "{{env_var_ibmcloud_bucket}}" --key "{{ download_item }}" --body "/downloads_tmp/{{ download_item }}"
+    #ibmcloud cos aspera-upload --region "{{ibmcloud_object_storage_bucket_region.stdout}}" --bucket "{{env_var_ibmcloud_bucket}}" --key "{{ download_item }}" "/downloads_tmp/{{ download_item }}"
+    rm /downloads_tmp/{{ download_item }}
+  register: upload_task
+  retries: 1
+  until: upload_task is not failed
+  ignore_errors: true
+
+- name: Output of upload_task
+  ansible.builtin.debug:
+    msg: "{{upload_task.stdout}}"

@@ -1,0 +1,98 @@
+---
+- name: Ansible Playbook for SAP Software installation media downloads
+  hosts: all
+  become: false
+
+  collections:
+    - community.sap_launchpad
+
+# Use include_role inside Task block, instead of using roles declaration or Task block with import_roles.
+# This ensures Ansible Roles, and the tasks within, will be parsed in sequence instead of parsing at Playbook initialisation
+  tasks:
+
+    - name: Set facts from Shell Environment Variables defined by IBM Cloud Code Engine
+      ansible.builtin.set_fact:
+        env_var_ibmcloud_service_id_apikey_ce_to_cr: "{{ ansible_env.IBMCLOUD_SERVICE_ID_APIKEY_CE_TO_CR | replace(\"'\",'') | replace('\"','') }}"
+        env_var_ibmcloud_service_id_apikey_cos_operator: "{{ ansible_env.IBMCLOUD_SERVICE_ID_APIKEY_COS_OPERATOR | replace(\"'\",'') | replace('\"','') }}"
+        env_var_ibmcloud_bucket: "{{ ansible_env.ANSIBLE_IBMCLOUD_BUCKET | replace(\"'\",'') | replace('\"','') }}"
+        env_var_ansible_sap_downloads_selected: "{{ ansible_env.ANSIBLE_SAP_DOWNLOADS_SELECTED.split(',') | replace(\"'\",'') | replace('\"','') }}"
+        env_var_ansible_sap_downloads_cpu_architecture: "{{ ansible_env.ANSIBLE_SAP_DOWNLOADS_CPU_ARCHITECTURE | replace(\"'\",'') | replace('\"','') }}"
+        env_var_ansible_sap_suser: "{{ ansible_env.ANSIBLE_SAP_SUSER | replace(\"'\",'') | replace('\"','') }}"
+        env_var_ansible_sap_suser_password: "{{ ansible_env.ANSIBLE_SAP_SUSER_PASSWORD | replace(\"'\",'') | replace('\"','') }}"
+
+    - name: Set fact x86_64 softwarecenter_search_list
+      ansible.builtin.set_fact:
+        softwarecenter_search_list: "{{ softwarecenter_search_list | default([]) + [item.value.softwarecenter_search_list_x86_64] | flatten }}"                                                                                                       
+      loop: "{{ query('dict', sap_software_templates_dictionary) }}"
+      loop_control:
+        label: "{{ item.key }}"
+      when:
+        - item.key in env_var_ansible_sap_downloads_selected
+        - env_var_ansible_sap_downloads_cpu_architecture == "x86_64"
+
+    - name: Set fact ppc64le softwarecenter_search_list
+      ansible.builtin.set_fact:
+        softwarecenter_search_list: "{{ softwarecenter_search_list | default([]) + [item.value.softwarecenter_search_list_ppc64le] | flatten }}"                                                                                                       
+      loop: "{{ query('dict', sap_software_templates_dictionary) }}"
+      loop_control:
+        label: "{{ item.key }}"
+      when:
+        - item.key in env_var_ansible_sap_downloads_selected
+        - env_var_ansible_sap_downloads_cpu_architecture == "ppc64le"
+
+    - name: Install Python dependencies for Ansible Modules to system Python
+      ansible.builtin.pip:
+        name:
+          - urllib3
+          - requests
+          - beautifulsoup4
+          - lxml
+#        executable: pip3.6
+
+    - name: Create directories if does not exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      with_items:
+        - "/downloads_tmp"
+
+    - name: Execute IBM Cloud CLI login and configuration for container runtime
+      ansible.builtin.shell: |
+        # Login and assign region to IBM Cloud CLI, use Service ID API Key
+        ibmcloud config --check-version=false
+        ibmcloud login --quiet --apikey="{{env_var_ibmcloud_service_id_apikey_cos_operator}}" --no-region > /dev/null 2>&1
+        ibmcloud config --check-version=true
+        # Use current Job Run domain, to identify current region of IBM Cloud Engine for the default actions
+        CE_REGION=$(echo $CE_DOMAIN | cut -f1 -d".")
+        ibmcloud target --quiet -r $CE_REGION > /dev/null 2>&1
+        # Identify IBM Cloud Object Storage Bucket location
+        ibmcloud cos bucket-location-get --bucket {{env_var_ibmcloud_bucket}} | awk '$1 ~ /Region:/ {print $2}'
+      args:
+        executable: /bin/bash
+      register: ibmcloud_object_storage_bucket_region
+
+    - name: Prepare IBM Cloud CLI with IBM COS and IBM Aspera protocol
+      ansible.builtin.shell: |
+        echo 'Show help menu and trigger first-time use download of IBM Aspera Transferd binary to $HOME/.aspera_sdk/bin/asperatransferd'
+        export IBMCLOUD_REGION="{{ibmcloud_object_storage_bucket_region.stdout}}"
+        export IBMCLOUD_API_KEY="{{env_var_ibmcloud_service_id_apikey_cos_operator}}"
+        ibmcloud cos aspera-download || true
+      register: ibmcloud_cli_prep2
+
+    - name: DRY RUN - Validate availability of SAP Software installation media
+      community.sap_launchpad.software_center_download:
+        suser_id: "{{ env_var_ansible_sap_suser }}"
+        suser_password: "{{ env_var_ansible_sap_suser_password }}"
+        softwarecenter_search_query: "{{ item }}"
+        dest: "/downloads_tmp"
+        dry_run: True
+      loop: "{{ softwarecenter_search_list | select() }}"
+#      vars:
+#        ansible_python_interpreter: python3.6
+
+    - name: Ansible Task Block - Loop to download file, upload, remove
+      include_tasks: "ansible_tasks_downloads_to_upload.yml"
+      loop: "{{ softwarecenter_search_list | select() }}"
+      loop_control:
+        loop_var: download_item

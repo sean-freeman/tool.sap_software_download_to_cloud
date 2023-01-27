@@ -1,0 +1,48 @@
+---
+
+# ---- Mandatory parameters : Ansible Dictionary for SAP software install media ---- #
+
+####sap_software_download_queue:
+
+# Templates and default values
+sap_software_templates_dictionary:
+
+  sap_s4hana_2021:
+
+    softwarecenter_search_list_x86_64:
+      - 'SAPCAR_1115-70006178.EXE'
+      - 'IMDB_SERVER20_066_0-80002031.SAR'
+      - 'IMDB_LCAPPS_2066_0-20010426.SAR'
+      - 'IMDB_AFL20_066_0-80001894.SAR'
+      - 'IMDB_CLIENT20_015_19-80002082.SAR'
+      - 'SWPM20SP13_4-80003424.SAR'
+      - 'igsexe_1-70005417.sar' # IGS 7.81
+      - 'igshelper_17-10010245.sar'
+      - 'SAPEXE_100-80005374.SAR' # Kernel Part I (785)
+      - 'SAPEXEDB_200-80005373.SAR' # Kernel Part II (785 Patch 200), SAP HANA 2.0
+      - 'SAPHOSTAGENT56_56-80004822.SAR' # SAP Host Agent 7.22
+      - 'S4CORE106_INST_EXPORT_1.zip'
+
+    softwarecenter_search_list_ppc64le:
+      - 'SAPCAR_1115-70006178.EXE'
+
+
+  sap_s4hana_2020:
+
+    softwarecenter_search_list_x86_64:
+      - 'SAPCAR_1115-70006178.EXE'
+      - 'IMDB_SERVER20_066_0-80002031.SAR'
+      - 'IMDB_LCAPPS_2066_0-20010426.SAR'
+      - 'IMDB_AFL20_066_0-80001894.SAR'
+      - 'IMDB_CLIENT20_015_19-80002082.SAR'
+      - 'SWPM20SP13_4-80003424.SAR'
+      - 'igsexe_1-70005417.sar' # IGS 7.81
+      - 'igshelper_17-10010245.sar'
+      - 'SAPEXE_100-80005374.SAR' # Kernel Part I (785)
+      - 'SAPEXEDB_200-80005373.SAR' # Kernel Part II (785 Patch 200), SAP HANA 2.0
+      - 'SAPHOSTAGENT56_56-80004822.SAR' # SAP Host Agent 7.22
+      - 'S4CORE106_INST_EXPORT_1.zip'
+
+    softwarecenter_search_list_ppc64le:
+      - 'SAPCAR_1115-70006178.EXE'
+
