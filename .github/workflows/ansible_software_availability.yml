@@ -78,6 +78,10 @@ jobs:
             echo "        for sublist in query_result:" >> python_module_fuzzy_call_script.py
             echo "            if sublist['Title'].startswith('DBATL'):" >> python_module_fuzzy_call_script.py
             echo "                print(sublist['Title'])" >> python_module_fuzzy_call_script.py
+            echo "    elif any('SYBCTRL' in sublist['Title'] for sublist in query_result):" >> python_module_fuzzy_call_script.py
+            echo "        for sublist in query_result:" >> python_module_fuzzy_call_script.py
+            echo "            if sublist['Title'].startswith('SYBCTRL'):" >> python_module_fuzzy_call_script.py
+            echo "                print(sublist['Title'])" >> python_module_fuzzy_call_script.py
             echo "    elif any('IMDB_CLIENT20' in sublist['Title'] for sublist in query_result):" >> python_module_fuzzy_call_script.py
             echo "        input_imdb_client = input_search_file_name_and_version_only[:-2]" >> python_module_fuzzy_call_script.py
             echo "        list_imdb_client = []" >> python_module_fuzzy_call_script.py
@@ -123,7 +127,7 @@ jobs:
             echo 'else:' >> python_module_fuzzy_call_script.py
             echo "    print(query_result[0]['Title'])" >> python_module_fuzzy_call_script.py
             export exit1_check=0
-            cd ../../
+            cd ../../../../
             for filename in $errors_list
             do
               filename_noext="${filename%.*}"
@@ -131,7 +135,7 @@ jobs:
               filename_name_and_version_only="${filename_noext%_*}"
               cd ./ansible_collections/community/sap_launchpad/plugins
               search_file="$(python ./python_module_fuzzy_call_script.py $filename_id_only $filename_name_and_version_only)" # Quote command substitution to preserve newline
-              cd ../../../
+              cd ../../../../
               if [[ "$search_file" == *"ERROR"* ]]; then
                 echo -e "$search_file" # Quote variable to preserve newline
                 exit1_check=1
@@ -139,6 +143,7 @@ jobs:
                 echo "Perform recursive sed for $filename change to $search_file"
                 stripped_search_file=$(echo $search_file | tr -d '\n')
                 find . -type f -not -path '*/\.*' -exec sed -i "s/$filename/$stripped_search_file/g" {} \;
+                cd ../../../
               fi
             done
             if [[ "$exit1_check" -eq 1 ]]; then
