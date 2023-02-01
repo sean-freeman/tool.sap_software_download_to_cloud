@@ -80,6 +80,22 @@
         ibmcloud cos aspera-download || true
       register: ibmcloud_cli_prep2
 
+    - name: Prepare IBM Cloud CLI for COS with the IBM Cloud Object Storage instance CRN, required for uploads via IBM Aspera
+      ansible.builtin.shell: |
+        # List all IBM Cloud Object Storage instances
+        IBMCOS_SERVICE_INSTANCE_LIST=$($HOME/ibmcloud_cli/bin/ibmcloud resource service-instances --long --all-resource-groups --service-name cloud-object-storage | awk '$1 == "ID:" { print $2 }')
+        # Identify IBM Cloud Object Storage instance which contains the Object Storage Bucket
+        for LOOP_ITEM in $IBMCOS_SERVICE_INSTANCE_LIST
+        do
+          search_for_bucket=$($HOME/ibmcloud_cli/bin/ibmcloud cos buckets --ibm-service-instance-id $LOOP_ITEM | awk '{ print $1 }')
+          if [[ "$search_for_bucket" == *"{{env_var_ibmcloud_bucket}}"* ]]; then
+            export IBMCOS_SERVICE_INSTANCE_CRN="$LOOP_ITEM"
+          fi
+        done
+        # Store IBM Cloud Object Storage instance CRN in the configuration of IBM Cloud CLI for COS
+        ibmcloud cos config crn --crn $IBMCOS_SERVICE_INSTANCE_CRN
+      register: ibmcloud_cli_prep3
+
     - name: DRY RUN - Validate availability of SAP Software installation media
       community.sap_launchpad.software_center_download:
         suser_id: "{{ env_var_ansible_sap_suser }}"

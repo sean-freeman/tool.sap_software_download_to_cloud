@@ -14,7 +14,34 @@ input_pretty "Please enter the IBM Cloud region to instantiate IBM Cloud Code En
 input_pretty "Please enter the Resource Group for the resources created with and run by IBM Cloud Code Engine" ibmcloud_resource_group
 input_pretty "Please enter the target IBM Cloud Object Storage Bucket name where the SAP Software installation media will be downloaded to" ANSIBLE_IBMCLOUD_BUCKET
 input_pretty "Please enter the CPU Architecture of the SAP Software installation media to download (options are x86_64, ppc64le)" ANSIBLE_SAP_DOWNLOADS_CPU_ARCHITECTURE
-input_pretty "Please enter which SAP Software installation media to download (options are sap_s4hana_2021, sap_s4hana_2022, sap_bw4hana_2021, sap_ecc6_ehp8_hana, sap_ecc6_ehp8_ibmdb2, sap_ecc6_ehp8_oracledb, sap_ecc6_ehp8_sapase, sap_ecc6_ehp8_sapmaxdb, sap_ecc6_ehp7_hana, sap_ecc6_ehp7_ibmdb2, sap_ides_ecc6_ehp8_hana, sap_ides_ecc6_ehp8_ibmdb2, sap_ides_ecc6_ehp8_oracledb, sap_ides_ecc6_ehp8_sapase, sap_ides_ecc6_ehp8_sapmaxdb, sap_nwas_750_sp22_java_ibmdb2_ads, sap_nwas_750_sp22_java_sapase_ads, sap_nwas_750_sp00_abap_hana, sap_nwas_750_sp00_abap_ibmdb2, sap_nwas_750_sp00_abap_oracledb, sap_nwas_750_sp00_abap_sapase, sap_nwas_750_sp00_abap_sapmaxdb, sap_nwas_752_sp00_abap_hana, sap_nwas_752_sp00_abap_ibmdb2, sap_nwas_752_sp00_abap_oracledb, sap_nwas_752_sp00_abap_sapase, sap_nwas_752_sp00_abap_sapmaxdb)" ANSIBLE_SAP_DOWNLOADS_SELECTED
+input_pretty "Please enter which SAP Software installation media to download. Please select from options (separate with comma - for example sap_s4hana_2022,sap_ecc6_ehp6_hana):
+sap_s4hana_2022
+sap_s4hana_2021
+sap_bw4hana_2021
+sap_ecc6_ehp8_hana
+sap_ecc6_ehp8_ibmdb2
+sap_ecc6_ehp8_oracledb
+sap_ecc6_ehp8_sapase
+sap_ecc6_ehp8_sapmaxdb
+sap_ecc6_ehp7_hana
+sap_ecc6_ehp7_ibmdb2
+sap_ides_ecc6_ehp8_hana
+sap_ides_ecc6_ehp8_ibmdb2
+sap_ides_ecc6_ehp8_oracledb
+sap_ides_ecc6_ehp8_sapase
+sap_ides_ecc6_ehp8_sapmaxdb
+sap_nwas_750_sp22_java_ibmdb2_ads
+sap_nwas_750_sp22_java_sapase_ads
+sap_nwas_750_sp00_abap_hana
+sap_nwas_750_sp00_abap_ibmdb2
+sap_nwas_750_sp00_abap_oracledb
+sap_nwas_750_sp00_abap_sapase
+sap_nwas_750_sp00_abap_sapmaxdb
+sap_nwas_752_sp00_abap_hana
+sap_nwas_752_sp00_abap_ibmdb2
+sap_nwas_752_sp00_abap_oracledb
+sap_nwas_752_sp00_abap_sapase
+sap_nwas_752_sp00_abap_sapmaxdb" ANSIBLE_SAP_DOWNLOADS_SELECTED
 input_pretty "Please enter your SAP User ID" ANSIBLE_SAP_SUSER
 input_pretty_confidential "Please enter your SAP User ID Password" ANSIBLE_SAP_SUSER_PASSWORD
 input_pretty "Please enter the name of the IBM Cloud Code Engine instance and resources (e.g. sap-downloads)" CE_PROJECT_NAME
@@ -129,7 +156,7 @@ ibmcloud ce buildrun submit \
 --image "$ibmcloud_cr_subdomain/$CE_PROJECT_NAME-cr-for-ce/$CE_DOCKER_IMAGE_NAME"
 
 # Find latest build image run (i.e. generate the container image)
-CE_CONTAINER_LATEST=$(ibmcloud ce buildrun list --sort-by age | grep sap-downloads | awk 'FNR == 1 {print $1}')
+CE_CONTAINER_LATEST=$(ibmcloud ce buildrun list --sort-by age | grep "$CE_PROJECT_NAME-ce-build-image" | awk 'FNR == 1 {print $1}')
 
 # Show IBM Cloud Code Engine build image run (generate the container image) details
 ibmcloud ce buildrun get \
@@ -183,6 +210,10 @@ ibmcloud ce jobrun submit \
 --env ANSIBLE_SAP_DOWNLOADS_SELECTED=\'$ANSIBLE_SAP_DOWNLOADS_SELECTED\' \
 --env ANSIBLE_SAP_DOWNLOADS_CPU_ARCHITECTURE=\'$ANSIBLE_SAP_DOWNLOADS_CPU_ARCHITECTURE\'
 
+# Show IBM Cloud Code Engine job run instance details
+ibmcloud ce jobrun get --name "$CE_PROJECT_NAME-ce-jobrun"
+
+
 
 # OPTIONAL: Once downloaded, delete all IBM Cloud Code Engine resources
 #ibmcloud iam service-id-delete --force "service-id-$CE_PROJECT_NAME-ce-to-cr"
@@ -190,10 +221,6 @@ ibmcloud ce jobrun submit \
 #ibmcloud cr namespace-rm --force "$CE_PROJECT_NAME-cr-for-ce"
 #ibmcloud ce project delete --hard --force --name "$CE_PROJECT_NAME-ce"
 
-
-
-# DEBUG: details about the job run instance
-#ibmcloud ce jobrun get --name "$CE_PROJECT_NAME-ce-jobrun"
 
 # DEBUG: container system events of the job run instance
 #ibmcloud ce jobrun events --name "$CE_PROJECT_NAME-ce-jobrun"

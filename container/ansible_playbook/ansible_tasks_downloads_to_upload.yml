@@ -22,8 +22,8 @@
   ansible.builtin.shell: |
     cd /downloads_tmp
     export IBMCLOUD_API_KEY="{{env_var_ibmcloud_service_id_apikey_cos_operator}}"
-    ibmcloud cos object-put --region "{{ibmcloud_object_storage_bucket_region.stdout}}" --bucket "{{env_var_ibmcloud_bucket}}" --key "{{ download_item }}" --body "/downloads_tmp/{{ download_item }}"
-    #ibmcloud cos aspera-upload --region "{{ibmcloud_object_storage_bucket_region.stdout}}" --bucket "{{env_var_ibmcloud_bucket}}" --key "{{ download_item }}" "/downloads_tmp/{{ download_item }}"
+    #ibmcloud cos object-put --region "{{ibmcloud_object_storage_bucket_region.stdout}}" --bucket "{{env_var_ibmcloud_bucket}}" --key "{{ download_item }}" --body "/downloads_tmp/{{ download_item }}"
+    ibmcloud cos aspera-upload --region "{{ibmcloud_object_storage_bucket_region.stdout}}" --bucket "{{env_var_ibmcloud_bucket}}" --key "{{ download_item }}" "/downloads_tmp/{{ download_item }}"
     rm /downloads_tmp/{{ download_item }}
   register: upload_task
   retries: 1
