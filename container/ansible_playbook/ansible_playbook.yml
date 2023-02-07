@@ -77,7 +77,7 @@
         echo 'Show help menu and trigger first-time use download of IBM Aspera Transferd binary to $HOME/.aspera_sdk/bin/asperatransferd'
         export IBMCLOUD_REGION="{{ibmcloud_object_storage_bucket_region.stdout}}"
         export IBMCLOUD_API_KEY="{{env_var_ibmcloud_service_id_apikey_cos_operator}}"
-        ibmcloud cos aspera-download > /dev/null 2>&1 || true
+        ibmcloud cos aspera-download || true
       args:
         executable: /bin/bash
       register: ibmcloud_cli_prep2
