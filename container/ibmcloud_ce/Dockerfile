@@ -8,6 +8,7 @@ RUN apt-get -qq update
 RUN apt-get -qq -y install jq curl git
 RUN apt-get -qq -y install python3 python3-pip python3-wheel unzip
 RUN apt-get -qq -y install python3-urllib3 python3-requests python3-bs4 python3-lxml libxslt1-dev libxml2-dev
+RUN apt-get -qq -y install dnsutils
 
 # Use Ansible Core 2.12+ which is available for all Ubuntu versions. Use of Ansible Community Edition locks the Ansible Core at a lower version
 RUN apt-get -qq -y install ansible-core
