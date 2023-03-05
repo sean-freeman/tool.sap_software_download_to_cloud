@@ -64,14 +64,14 @@ CE_DOCKER_IMAGE_NAME="$CE_PROJECT_NAME-ce-image"
 
 # Login and assign region to IBM Cloud CLI
 ibmcloud config --check-version=false
-ibmcloud login --apikey="$ibmcloud_apikey"
+ibmcloud login --apikey="$ibmcloud_apikey" --no-region
 ibmcloud config --check-version=true
 ibmcloud target -r $ibmcloud_region
 
 # Ensure IBM Cloud CLI plugins are installed
 ibmcloud_cli_plugins=$(ibmcloud plugin list | awk '{print $1}')
-if grep -q 'code-engine' <<<"$ibmcloud_cli_plugins"; then echo "Skipping code-engine plugin install to IBM Cloud CLI"; else ibmcloud plugin install code-engine; fi
-if grep -q 'container-registry' <<<"$ibmcloud_cli_plugins"; then echo "Skipping container-registry plugin install to IBM Cloud CLI"; else ibmcloud plugin install container-registry; fi
+if grep -q 'code-engine' <<<"$ibmcloud_cli_plugins"; then echo "Skipping code-engine plugin install to IBM Cloud CLI"; else ibmcloud plugin install -f code-engine; fi
+if grep -q 'container-registry' <<<"$ibmcloud_cli_plugins"; then echo "Skipping container-registry plugin install to IBM Cloud CLI"; else ibmcloud plugin install -f container-registry; fi
 
 # Target an existing Resource Group
 ibmcloud target -g "$ibmcloud_resource_group"
